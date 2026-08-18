@@ -9,7 +9,7 @@
 # ─── STAGE 1: Frontend Build ──────────────────────────────────────
 FROM node:22-alpine AS frontend-build
 WORKDIR /app/frontend
-COPY frontend/package.json frontend/package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
 RUN npm ci --no-audit --no-fund
 COPY frontend/ ./
 ENV EXPORT=true NEXT_TELEMETRY_DISABLED=1
@@ -34,7 +34,7 @@ ENV NODE_ENV=production \
     FRONTEND_PATH=/app/frontend/out
 
 # Backend dependencies (production only)
-COPY backend/package.json backend/package-lock.json ./
+COPY backend/package.json backend/package-lock.json backend/.npmrc ./
 RUN npm ci --omit=dev --no-audit --no-fund
 # Seed uchun ts-node kerak (devDependencies tarkibida)
 RUN npm install ts-node tsconfig-paths --no-save --no-audit --no-fund
