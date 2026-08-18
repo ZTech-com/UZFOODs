@@ -6,20 +6,18 @@
 # 2. GitHub repo'ni bog'lang: ZTech-com/UZFOODs
 # 3. Render avtomatik render.yaml'ni topadi va barchasini yaratadi
 #
-# Yoki manual:
-# 1. https://dashboard.render.com/new/web-service
-# 2. Repo: ZTech-com/UZFOODs
-# 3. Dockerfile path: /Dockerfile
-# 4. Environment: DATABASE_URL, TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID
+# XATOLIK TUSHUNTIRMASI:
+# - runtime: docker → Dockerfile'dan image build qiladi
+# - runtime: image  → tayyor image registry'dan oladi (bizga kerak emas)
+# - dockerfilePath  → service level'da, image: ICHIDA emas
 # ═══════════════════════════════════════════════════════════════════
 
 services:
   - type: web
     name: uzfoods
-    runtime: image
-    image:
-      type: Dockerfile
-      dockerfilePath: Dockerfile
+    runtime: docker                  # Dockerfile'dan build (image emas!)
+    dockerfilePath: ./Dockerfile     # Service level'da (image: ichida emas!)
+    dockerContext: .                 # Build context — repo root
     plan: free
     envVars:
       - key: NODE_ENV
@@ -29,15 +27,15 @@ services:
           name: uzfoods-db
           property: connectionString
       - key: TELEGRAM_BOT_TOKEN
-        sync: false  # Hand Input — qo'lda kiriting
+        sync: false                  # Qo'lda kiriting
       - key: TELEGRAM_ADMIN_CHAT_ID
-        sync: false
+        sync: false                  # Qo'lda kiriting
       - key: JWT_SECRET
         generateValue: true
       - key: PORT
         value: 3001
       - key: CORS_ORIGINS
-        value: ""  # Production'da backend frontend bilan bir xil origin'da
+        value: ""                    # Production'da backend frontend bilan bir xil origin'da
     healthCheckPath: /api/health
     autoDeploy: true
 
