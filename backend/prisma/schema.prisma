@@ -1,0 +1,114 @@
+// Prisma schema — Restoran buyurtma tizimi (PostgreSQL, production)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+model Customer {
+  id               Int       @id @default(autoincrement())
+  name             String
+  phone            String    @unique
+  telegramUsername String?
+  createdAt        DateTime  @default(now())
+  orders           Order[]
+}
+
+model MenuItem {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  price       Decimal     @db.Decimal(12, 2)
+  imageUrl    String?
+  category    String
+  available   Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  orderItems  OrderItem[]
+
+  @@unique([name])
+  @@index([category])
+  @@index([available])
+}
+
+model Order {
+  id                Int                 @id @default(autoincrement())
+  customerId        Int
+  customer          Customer            @relation(fields: [customerId], references: [id])
+  totalAmount       Decimal             @db.Decimal(12, 2)
+  requiredTime      String // qachon tayyor bo'lishi kerak, masalan "13:30"
+  status            OrderStatus         @default(PENDING)
+  note              String? // mijoz izohi
+  cancelledReason   String? // bekor qilish sababi
+  deletedAt         DateTime? // soft delete
+  deletedBy         String?
+  idempotencyKey    String?             @unique // takroriy buyurtmadan himoya
+  telegramStatus    String              @default("PENDING") // PENDING | SENT | FAILED
+  telegramMessageId Int?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  items             OrderItem[]
+  history           OrderStatusHistory[]
+
+  @@index([status])
+  @@index([status, deletedAt])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([requiredTime])
+  @@index([customerId])
+}
+
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  orderId    Int
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId Int
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  quantity   Int
+  // Narx snapshot'i — menyu narxi o'zgarsa ham buyurtma narxi o'zgarmaydi
+  price      Decimal  @db.Decimal(12, 2)
+
+  @@index([orderId])
+  @@index([menuItemId])
+}
+
+/// Har bir holat o'zgarishi tarixi (PENDING → PREPARING → READY → ...)
+model OrderStatusHistory {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String // OrderStatus qiymati
+  reason    String?
+  changedBy String? // 'system' | 'admin' | 'telegram'
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+/// Admin harakatlari auditi (maxfiy ma'lumotlar log qilinmaydi)
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  admin     String
+  action    String // STATUS_CHANGED | ORDER_DELETED | ORDER_RESTORED | ORDER_PERMANENT_DELETED | PRODUCT_UPDATED | ...
+  entity    String // Order | MenuItem | ...
+  entityId  String
+  oldValue  String?
+  newValue  String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
