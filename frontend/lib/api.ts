@@ -9,12 +9,16 @@ import type {
   StatsResponse,
 } from "./types";
 
-// Production'da backend bilan bir xil origin'da ishlaydi (relative URL)
-// Development'da alohida port (NEXT_PUBLIC_API_URL)
+// API URL aniqlash:
+// - NEXT_PUBLIC_API_URL belgilangan bo'lsa — o'sha URL ishlatiladi (Vercel frontend → alohida backend)
+// - Yo'q bo'lsa — same origin (Docker: backend frontend'ni xizmat qiladi)
+// - Development'da — localhost:3001
 export const API_URL =
-  typeof window !== "undefined" && !window.location.hostname.includes("localhost")
-    ? "" // production — same origin (backend frontend'ni xizmat qiladi)
-    : process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+  process.env.NEXT_PUBLIC_API_URL ?? (
+    typeof window !== "undefined" && !window.location.hostname.includes("localhost")
+      ? "" // production — same origin (Docker/Render)
+      : "http://localhost:3001"
+  );
 
 export class ApiError extends Error {
   status: number;

@@ -36,6 +36,8 @@ ENV NODE_ENV=production \
 # Backend dependencies (production only)
 COPY backend/package.json backend/package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
+# Seed uchun ts-node kerak (devDependencies tarkibida)
+RUN npm install ts-node tsconfig-paths --no-save --no-audit --no-fund
 
 # Prisma engine + generated client
 COPY --from=backend-build /app/node_modules/.prisma ./node_modules/.prisma
@@ -61,4 +63,4 @@ COPY --from=backend-build /app/prisma/seed.ts ./prisma/seed.ts
 EXPOSE 3001
 
 # Ishga tushirish: sxema → seed → server
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/main"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate && npx prisma db seed && node dist/main"]
