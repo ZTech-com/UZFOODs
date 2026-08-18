@@ -44,7 +44,10 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - run: npm ci
+      # npm ci lockfile-ga qattiq tekshiradi va Windows'da yaratilgan
+      # lockfile Linux'da @emnapi optional deps tufayli yiqilishi mumkin.
+      # npm install lockfile'ni hurmat qiladi, lekin bo'shliqlarni to'ldiradi.
+      - run: npm install --no-audit --no-fund
 
       - name: Build static export
         env:
