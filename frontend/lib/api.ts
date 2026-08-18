@@ -9,8 +9,12 @@ import type {
   StatsResponse,
 } from "./types";
 
+// Production'da backend bilan bir xil origin'da ishlaydi (relative URL)
+// Development'da alohida port (NEXT_PUBLIC_API_URL)
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+  typeof window !== "undefined" && !window.location.hostname.includes("localhost")
+    ? "" // production — same origin (backend frontend'ni xizmat qiladi)
+    : process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export class ApiError extends Error {
   status: number;

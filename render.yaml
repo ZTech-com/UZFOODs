@@ -1,0 +1,48 @@
+# ═══════════════════════════════════════════════════════════════════
+# Render.com Blueprint — UZFOODs Restoran Tizimi
+#
+# Ishga tushirish:
+# 1. https://dashboard.render.com/new/blueprint
+# 2. GitHub repo'ni bog'lang: ZTech-com/UZFOODs
+# 3. Render avtomatik render.yaml'ni topadi va barchasini yaratadi
+#
+# Yoki manual:
+# 1. https://dashboard.render.com/new/web-service
+# 2. Repo: ZTech-com/UZFOODs
+# 3. Dockerfile path: /Dockerfile
+# 4. Environment: DATABASE_URL, TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID
+# ═══════════════════════════════════════════════════════════════════
+
+services:
+  - type: web
+    name: uzfoods
+    runtime: image
+    image:
+      type: Dockerfile
+      dockerfilePath: Dockerfile
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: uzfoods-db
+          property: connectionString
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false  # Hand Input — qo'lda kiriting
+      - key: TELEGRAM_ADMIN_CHAT_ID
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 3001
+      - key: CORS_ORIGINS
+        value: ""  # Production'da backend frontend bilan bir xil origin'da
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+databases:
+  - name: uzfoods-db
+    plan: free
+    databaseName: uzfoods
+    user: uzfoods
